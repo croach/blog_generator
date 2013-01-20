@@ -1,0 +1,48 @@
+#container {
+    width: 450px;
+}
+
+#content {
+    padding-top: 2em;
+    font-size: 0.85em;
+    text-align: justify;
+}
+
+#content h1 {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+#content h2 {
+    font-size: 10px;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#content h3 {
+    font-family: Georgia, serif;
+    font-size: 1.25em;
+    margin-top: 1.5em;
+    margin-bottom: 0;
+}
+
+#content p {
+    margin-top: 0.5em;
+    line-height: 1.5em;
+}
+
+h3#date {
+    font-family: Verdana, sans-serif;
+    margin-bottom: 0;
+    margin-top: 0;
+    font-weight: normal;
+    color: #999999;
+    font-size: 0.8em;
+}
+
+#content blockquote {
+	margin: 3em 3em;
+	color: #999999;
+	border-left: 2px solid #999999;
+	padding-left: 1em; 
+}

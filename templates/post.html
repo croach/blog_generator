@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <!-- Header -->
+    <div id="header">
+        <h1>{{ post.meta.title }}</h1>
+        {% if post.meta.subtitle %}
+            <h2>{{ post.meta.subtitle }}</h2>
+        {% endif %}
+        <h3 id="date">{{ post.meta.date|date }}</h3>
+    </div>
+
+    <div id="content">
+        {{ post.html|safe }}
+    </div>
+
+    {# {% include comments/disqus.html %} #}
+
+{% endblock content %}
+
+

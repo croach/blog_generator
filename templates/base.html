@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    {# {% if page %}
+    <title>{{ page.title }}</title>
+    {% else %}
+    <title>christopherroach.com</title>
+    {% endif %}
+     #}
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/master.css') }}" type="text/css" media="screen" charset="utf-8"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" media="screen" charset="utf-8"/>
+    {# {% if page.content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/content.css') }}" type="text/css" media="screen" charset="utf-8"/>
+    {% endif %} #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/syntax.css') }}" type="text/css" media="screen" charset="utf-8"/>
+    <!--[if !IE]>--> <!-- TODO: remove this and make the CSS "responsive" -->
+    <link media="only screen and (max-device-width: 480px)" rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/iphone.css') }}"/>
+    <!--<![endif]-->
+
+    <!-- Feeds -->
+    {#   {% for feed in site.feeds %}
+    <link rel='alternate' type='application/rss+xml' href='{{feed.url}}' title="{{feed.title}}"/>
+    {% endfor %} #}
+
+    <!-- Open ID -->
+    <link rel="openid.server" href="http://www.myopenid.com/server"/>
+    <link rel="openid.delegate" href="http://vthakr.myopenid.com/"/>
+</head>
+<body>
+    <div id="container">
+
+        {% block content %}
+            Main content goes here
+        {% endblock content %}
+
+        <!-- Footer -->
+        <div id='footer'>
+            <ul>
+                <li>
+                    <a href='/'>Home</a> |
+                </li>
+                <li>
+                    <a href='/about/'>About</a>
+                </li>
+            </ul>
+            <p>
+                <span id='full-name'>Christopher Roach</span> | Software Engineer
+            </p>
+            <p>
+                <a href='mailto:christopher.roach@mac.com'>christopher.roach@mac.com</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Google Analytics -->
+    {% include "_analytics.html" %}
+</body>
+</html>
