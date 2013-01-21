@@ -4,6 +4,12 @@ blog.md
 # Ignore the posts directory
 posts/*
 
+# Ignore the build directory
+build/*
+
+# Ignore python compiled files
+*.pyc
+
 # Ignore emacs temp files
 \#*\#
 *~
