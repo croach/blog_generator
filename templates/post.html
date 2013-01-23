@@ -2,6 +2,9 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/post.css') }}" type="text/css" media="screen" charset="utf-8"/>
+    {% if post.meta.title %}
+    <title>{{ post.meta.title }}{% if post.meta.subtitle %}: {{ post.meta.subtitle }}{% endif %}</title>
+    {% endif %}
 {% endblock head %}
 
 {% block content %}
