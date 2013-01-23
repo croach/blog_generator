@@ -14,6 +14,7 @@ import markdown
 # Code for handling blog posts
 class Posts(object):
     def __init__(self, app):
+        self._app = app
         self._cache = {}
         self.root = os.path.join(app.root_path, app.config.get('POSTS_ROOT', ''))
         self.file_ext = app.config.get('POSTS_EXTENSION', '')
@@ -25,9 +26,10 @@ class Posts(object):
         abs_path = os.path.join(self.root, path + self.file_ext)
 
         # If the post is cached, return it
-        post = self._cache.get(abs_path, None)
-        if post:
-            return post
+        if not self._app.config.get('DEBUG', False):
+            post = self._cache.get(abs_path, None)
+            if post:
+                return post
 
         # otherwise, find the post in the file system
         try:
@@ -38,6 +40,7 @@ class Posts(object):
 
         # Cache the post and return it
         self._cache[abs_path] = post
+
         return post
 
     def initialize_cache(self):
