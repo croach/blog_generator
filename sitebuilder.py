@@ -72,13 +72,13 @@ class Post(object):
 
     @cached_property
     def html(self):
-        content = self.content.split('\n\n')[1:]
-        content = ''.join(content).strip()
-        return markdown.markdown(content)
+        content = self.content.split('\n\n', 1)[1]
+        content.strip()
+        return markdown.markdown(content, ['fenced_code', 'codehilite'])
 
     @cached_property
     def meta(self):
-        content = self.content.split('\n\n')[0]
+        content = self.content.split('\n\n', 1)[0]
         content.strip()
         return yaml.load(content)
 
