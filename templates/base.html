@@ -11,13 +11,15 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/master.css') }}" type="text/css" media="screen" charset="utf-8"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" type="text/css" media="screen" charset="utf-8"/>
-    {# {% if page.content %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/content.css') }}" type="text/css" media="screen" charset="utf-8"/>
-    {% endif %} #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/syntax.css') }}" type="text/css" media="screen" charset="utf-8"/>
     <!--[if !IE]>--> <!-- TODO: remove this and make the CSS "responsive" -->
     <link media="only screen and (max-device-width: 480px)" rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/iphone.css') }}"/>
     <!--<![endif]-->
+
+    {% block head %}
+        <!-- Additional CSS and other meta information goes here -->
+        <title>christopherroach.com</title>
+    {% endblock head %}
 
     <!-- Feeds -->
     {#   {% for feed in site.feeds %}
