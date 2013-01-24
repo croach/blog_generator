@@ -124,6 +124,7 @@ class Post(object):
         self.url = self.path.replace(root + os.sep, '')  # Make it relative to root
         self.url = os.path.splitext(self.url)[0]         # Remove the file extension
         self.url = self.url.replace(os.sep, '/')         # Replace os seperators with URL seperators
+        self.published = False
         self._initialize_meta()
 
     @cached_property
@@ -159,11 +160,14 @@ posts = Posts(app)
 def date_filter(value, format='%B %d, %Y'):
     return value.strftime(format)
 
-
 # Routes
 @app.route('/')
 def index():
-    return render_template('index.html', posts=posts)
+    if app.debug:
+        published = [post for post in posts if post.published]
+    else:
+        published = posts
+    return render_template('index.html', posts=published)
 
 @app.route('/blog/<path:path>/')
 def post(path):
@@ -173,10 +177,16 @@ def post(path):
 # Frozen Flask generators
 @freezer.register_generator
 def post_url_generator():
-    return [('post', {'path': post.url}) for post in posts]
+    if app.debug:
+        published = [post for post in posts if post.published]
+    else:
+        published = posts
+    return [('post', {'path': post.url}) for post in published]
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'build':
+        app.config['DEBUG'] = False
         freezer.freeze()
     else:
         app.run(port=8000)
