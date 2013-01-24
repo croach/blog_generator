@@ -20,7 +20,7 @@ class SortedDict(dict):
             self._compare = lambda item1, item2: key(item1) < key(item2)
 
         # Insert all of the items into the dict
-        self.update(dict(items))
+        self.update(items)
 
     def __setitem__(self, key, value):
         # If the key already exists in the dict, remove it from the
@@ -59,9 +59,16 @@ class SortedDict(dict):
     def values(self):
         return [v for _, v in self.items()]
 
-    def update(self, other):
-        for k, v in other.items():
-            self[k] = v
+    def update(self, items=[], **kwargs):
+        if hasattr(items, 'keys'):
+            for key in items:
+                self[key] = items[key]
+        else:
+            for (key, value) in items:
+                self[key] = value
+
+        for key in kwargs:
+            self[key] = kwargs[key]
 
 
 # Code for handling blog posts
