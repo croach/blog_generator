@@ -75,7 +75,7 @@ class SortedDict(dict):
 class Posts(object):
     def __init__(self, app):
         self._app = app
-        self._cache = SortedDict(reverse=True)
+        self._cache = SortedDict(key=lambda post: post.date, reverse=True)
         self.root = os.path.join(app.root_path, app.config.get('POSTS_ROOT_DIRECTORY', ''))
         self.file_ext = app.config.get('POSTS_FILE_EXTENSION', '')
         self._initialize_cache()
