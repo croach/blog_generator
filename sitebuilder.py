@@ -148,6 +148,8 @@ DEBUG = True
 POSTS_ROOT_DIRECTORY = 'posts'
 POSTS_FILE_EXTENSION = '.md'
 POSTS_URL_PREFIX = 'blog'
+FREEZER_REMOVE_EXTRA_FILES = True
+FREEZER_DESTINATION = os.path.join(os.environ['HOME'], 'developer', 'croach.github.com')
 
 app = Flask(__name__)
 app.config.from_object(__name__)
