@@ -156,7 +156,7 @@ def date_filter(value, format='%B %d, %Y'):
 # Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', posts=posts)
 
 @app.route('/blog/<path:path>/')
 def post(path):
