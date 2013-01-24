@@ -165,7 +165,7 @@ def date_filter(value, format='%B %d, %Y'):
 # Routes
 @app.route('/')
 def index():
-    if app.debug:
+    if not app.debug:
         published = [post for post in posts if post.published]
     else:
         published = posts
@@ -179,7 +179,7 @@ def post(path):
 # Frozen Flask generators
 @freezer.register_generator
 def post_url_generator():
-    if app.debug:
+    if not app.debug:
         published = [post for post in posts if post.published]
     else:
         published = posts
