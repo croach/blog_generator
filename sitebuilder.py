@@ -11,39 +11,95 @@ import yaml
 import markdown
 
 
+class SortedDict(dict):
+    def __init__(self, items=[], key=lambda item: item, reverse=False):
+        self._items = []
+        if reverse:
+            self._compare = lambda item1, item2: key(item1) > key(item2)
+        else:
+            self._compare = lambda item1, item2: key(item1) < key(item2)
+
+        # Insert all of the items into the dict
+        self.update(dict(items))
+
+    def __setitem__(self, key, value):
+        # If the key already exists in the dict, remove it from the
+        # ordered items list before inserting it
+        if key in self:
+            self._items.remove(key)
+
+        # Get the index of the position where to insert the new item
+        index = len(self._items)
+        for i in range(len(self._items)):
+            curr = dict.__getitem__(self, self._items[i])
+            if self._compare(value, curr):
+                index = i
+                break
+
+        # Insert the new item into the ordered items list and self
+        self._items.insert(index, key)
+        dict.__setitem__(self, key, value)
+
+    def __delitem__(self, key):
+        self._items.remove(key)
+        dict.__delitem__(self, key)
+
+    def __iter__(self):
+        return iter(self.keys())
+
+    def __reverse__(self):
+        return reversed(self.keys())
+
+    def items(self):
+        return [(key, self[key]) for key in self._items]
+
+    def keys(self):
+        return [k for k, _ in self.items()]
+
+    def values(self):
+        return [v for _, v in self.items()]
+
+    def update(self, other):
+        for k, v in other.items():
+            self[k] = v
+
+
 # Code for handling blog posts
 class Posts(object):
     def __init__(self, app):
         self._app = app
-        self._cache = {}
-        self.root = os.path.join(app.root_path, app.config.get('POSTS_ROOT', ''))
-        self.file_ext = app.config.get('POSTS_EXTENSION', '')
+        self._cache = SortedDict(reverse=True)
+        self.root = os.path.join(app.root_path, app.config.get('POSTS_ROOT_DIRECTORY', ''))
+        self.file_ext = app.config.get('POSTS_FILE_EXTENSION', '')
+        self._initialize_cache()
+
+    def __iter__(self):
+        return iter(self._cache.values())
+
+    def __len__(self):
+        return len(self._cache)
+
+    def __getitem__(self, key):
+        return self._cache.values()[key]
 
     def get_or_404(self, path):
         """
         Returns the Post object at path or raises a NotFound error
         """
-        abs_path = os.path.join(self.root, path + self.file_ext)
+        # Grab the post from the cache
+        post = self._cache.get(path, None)
 
-        # If the post is cached, return it
-        if not self._app.config.get('DEBUG', False):
-            post = self._cache.get(abs_path, None)
-            if post:
-                return post
-
-        # otherwise, find the post in the file system
-        try:
-            with open(abs_path, 'r') as fin:
-                post = Post(fin.read())
-        except IOError:
-            abort(404)
-
-        # Cache the post and return it
-        self._cache[abs_path] = post
+        # If the post isn't cached (or DEBUG), create a new Post object
+        if not post or self._app.config.get('DEBUG', False):
+            filepath = os.path.join(self.root, path + self.file_ext)
+            if not os.path.isfile(filepath):
+                abort(404)
+            post = Post(filepath, self.root)
+            self._cache[path] = post
 
         return post
 
-    def initialize_cache(self):
+    def _initialize_cache(self):
         """
         Walks the root directory and adds all posts to the cache dict
         """
@@ -51,42 +107,39 @@ class Posts(object):
             for filepath in filepaths:
                 if filepath.endswith(self.file_ext):
                     abs_path = os.path.join(path, filepath)
-                    with open(abs_path, 'r') as fin:
-                        self._cache[abs_path] = Post(fin.read())
-
-    @cached_property
-    def abs_paths(self):
-        if not self._cache:
-            self.initialize_cache()
-        return self._cache.keys()
-
-    @cached_property
-    def rel_paths(self):
-        root = self.root + os.sep
-        return [abs_path.replace(root, '') for abs_path in self.abs_paths]
+                    url = abs_path.replace(self.root, '').replace(self.file_ext, '')
+                    self._cache[url] = Post(abs_path, self.root)
 
 
 class Post(object):
-    def __init__(self, content):
-        self.content = content
+    def __init__(self, path, root=''):
+        self.path = os.path.join(root, path)
+        self.url = self.path.replace(root + os.sep, '')  # Make it relative to root
+        self.url = os.path.splitext(self.url)[0]         # Remove the file extension
+        self.url = self.url.replace(os.sep, '/')         # Replace os seperators with URL seperators
+        self._initialize_meta()
 
     @cached_property
     def html(self):
-        content = self.content.split('\n\n', 1)[1]
-        content.strip()
+        with open(self.path, 'r') as fin:
+            content = fin.read().split('\n\n', 1)[1].strip()
         return markdown.markdown(content, ['fenced_code', 'codehilite'])
 
-    @cached_property
-    def meta(self):
-        content = self.content.split('\n\n', 1)[0]
-        content.strip()
-        return yaml.load(content)
+    def _initialize_meta(self):
+        content = ''
+        with open(self.path, 'r') as fin:
+            for line in fin:
+                if not line.strip():
+                    break
+                content += line
+        self.__dict__.update(yaml.load(content))
 
 
 # Configuration
 DEBUG = True
-POSTS_ROOT = 'posts'
-POSTS_EXTENSION = '.md'
+POSTS_ROOT_DIRECTORY = 'posts'
+POSTS_FILE_EXTENSION = '.md'
+POSTS_URL_PREFIX = 'blog'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -113,12 +166,7 @@ def post(path):
 # Frozen Flask generators
 @freezer.register_generator
 def post_url_generator():
-    # Remove the markdown file extension to turn each filepath into a URL path
-    paths = [path.replace(posts.file_ext, '') for path in posts.rel_paths]
-    # Replace the OS specific separator with URL seperators
-    paths = [path.replace(os.sep, '/') for path in paths]
-    return [('post', {'path': path}) for path in paths]
-
+    return [('post', {'path': post.url}) for post in posts]
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'build':

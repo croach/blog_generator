@@ -2,8 +2,8 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/post.css') }}" type="text/css" media="screen" charset="utf-8"/>
-    {% if post.meta.title %}
-    <title>{{ post.meta.title }}{% if post.meta.subtitle %}: {{ post.meta.subtitle }}{% endif %}</title>
+    {% if post.title %}
+    <title>{{ post.title }}{% if post.subtitle %}: {{ post.subtitle }}{% endif %}</title>
     {% endif %}
 {% endblock head %}
 
@@ -11,11 +11,11 @@
 
     <!-- Header -->
     <div id="header">
-        <h1>{{ post.meta.title }}</h1>
-        {% if post.meta.subtitle %}
-            <h2>{{ post.meta.subtitle }}</h2>
+        <h1>{{ post.title }}</h1>
+        {% if post.subtitle %}
+            <h2>{{ post.subtitle }}</h2>
         {% endif %}
-        <h3 id="date">{{ post.meta.date|date }}</h3>
+        <h3 id="date">{{ post.date|date }}</h3>
     </div>
 
     <div id="content">
