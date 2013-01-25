@@ -149,7 +149,7 @@ POSTS_ROOT_DIRECTORY = 'posts'
 POSTS_FILE_EXTENSION = '.md'
 POSTS_URL_PREFIX = 'blog'
 FREEZER_REMOVE_EXTRA_FILES = True
-FREEZER_DESTINATION = os.path.join(os.environ['HOME'], 'developer', 'croach.github.com')
+FREEZER_DESTINATION = os.path.join(os.path.abspath(os.pardir), 'croach.github.com')
 FREEZER_IGNORED_FILES = ['.git', 'CNAME']
 
 app = Flask(__name__)
