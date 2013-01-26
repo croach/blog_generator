@@ -1,0 +1,8 @@
+Flask==0.9
+-e git+git@github.com:croach/Frozen-Flask.git@964ad0bfbd66f983a355bf7d73b12b426d3e631d#egg=Frozen_Flask-dev
+Jinja2==2.6
+Markdown==2.2.1
+PyYAML==3.10
+Pygments==1.6rc1
+Werkzeug==0.8.3
+wsgiref==0.1.2
