@@ -1,9 +1,6 @@
 # Ignore the outline for a Flask screencast
 blog.md
 
-# Ignore the posts directory
-posts/*
-
 # Ignore the build directory
 build/*
 
