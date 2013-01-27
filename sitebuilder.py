@@ -5,7 +5,8 @@ import sys
 import urlparse
 
 from werkzeug import cached_property
-from flask import Flask, render_template, abort
+from werkzeug.contrib.atom import AtomFeed
+from flask import Flask, render_template, abort, request
 from flask_frozen import Freezer
 import yaml
 import markdown
@@ -176,6 +177,18 @@ def index():
 def post(path):
     post = posts.get_or_404(path)
     return render_template('post.html', post=post)
+
+@app.route('/feed.atom')
+def feed():
+    feed = AtomFeed('Recent Articles', feed_url=request.url, url=request.url_root)
+    for post in posts[:10]:  # Just show the last 10 posts
+        feed.add(post.title, unicode(post.html),
+            content_type='html',
+            author='Christopher Roach',
+            url=urlparse.urljoin(request.url_root, 'blog', post.url),
+            updated=post.date,
+            published=post.date)
+    return feed.get_response()
 
 # Frozen Flask generators
 @freezer.register_generator
