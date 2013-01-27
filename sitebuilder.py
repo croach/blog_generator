@@ -180,7 +180,7 @@ def post(path):
 
 @app.route('/feed.atom')
 def feed():
-    feed = AtomFeed('Recent Articles', feed_url=request.url, url=request.url_root)
+    feed = AtomFeed('Christopher Roach', feed_url=request.url, url=request.url_root)
     for post in posts[:10]:  # Just show the last 10 posts
         feed.add(post.title, unicode(post.html),
             content_type='html',
