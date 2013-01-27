@@ -3,6 +3,7 @@
 import os
 import sys
 import urlparse
+import datetime
 
 from werkzeug import cached_property
 from werkzeug.contrib.atom import AtomFeed
@@ -183,7 +184,8 @@ def post(path):
 def feed():
     feed = AtomFeed('Christopher Roach',
         feed_url='http://%s/%s' % (DOMAIN, 'feed.atom'),
-        url='http://%s' % DOMAIN)
+        url='http://%s' % DOMAIN,
+        updated=datetime.datetime.now())
     for post in posts[:10]:  # Just show the last 10 posts
         try:
             post_title = '%s: %s' % (post.title, post.subtitle)
@@ -191,7 +193,9 @@ def feed():
             post_title = post.title
         post_url = 'http://%s/%s/%s' % (DOMAIN, 'blog', post.url)
 
-        feed.add(post_title, unicode(post.html),
+        feed.add(
+            title=post_title,
+            content=unicode(post.html),
             content_type='html',
             author='Christopher Roach',
             url=post_url,
