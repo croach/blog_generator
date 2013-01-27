@@ -152,6 +152,7 @@ POSTS_URL_PREFIX = 'blog'
 FREEZER_REMOVE_EXTRA_FILES = True
 FREEZER_DESTINATION = os.path.join(os.path.abspath(os.pardir), 'croach.github.com')
 FREEZER_IGNORED_FILES = ['.git', 'CNAME']
+DOMAIN = 'christopherroach.com'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -180,12 +181,20 @@ def post(path):
 
 @app.route('/feed.atom')
 def feed():
-    feed = AtomFeed('Christopher Roach', feed_url=request.url, url=request.url_root)
+    feed = AtomFeed('Christopher Roach',
+        feed_url='http://%s/%s' % (DOMAIN, 'feed.atom'),
+        url='http://%s' % DOMAIN)
     for post in posts[:10]:  # Just show the last 10 posts
-        feed.add(post.title, unicode(post.html),
+        try:
+            post_title = '%s: %s' % (post.title, post.subtitle)
+        except AttributeError:
+            post_title = post.title
+        post_url = 'http://%s/%s/%s' % (DOMAIN, 'blog', post.url)
+
+        feed.add(post_title, unicode(post.html),
             content_type='html',
             author='Christopher Roach',
-            url=urlparse.urljoin(request.url_root, 'blog', post.url),
+            url=post_url,
             updated=post.date,
             published=post.date)
     return feed.get_response()
