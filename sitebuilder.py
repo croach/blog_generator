@@ -7,7 +7,7 @@ import datetime
 
 from werkzeug import cached_property
 from werkzeug.contrib.atom import AtomFeed
-from flask import Flask, render_template, abort, request
+from flask import Flask, render_template, abort
 from flask_frozen import Freezer
 import yaml
 import markdown
