@@ -248,9 +248,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Static site builder",
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('command',
-        nargs='?',
-        default='debug',
-        metavar='COMMAND',
+        nargs='?', default='debug', metavar='COMMAND',
         help="""one of the commands listed below (defaults to debug).
 
 build - builds the static website
@@ -259,9 +257,7 @@ run   - builds and serves the site
 debug - runs the development server in debug mode
     """)
     parser.add_argument('directory',
-        nargs='?',
-        default='build',
-        metavar='DIRECTORY',
+        nargs='?', default='build', metavar='DIRECTORY',
         help="the directory in which to build the site (default build)")
 
     args = parser.parse_args()
