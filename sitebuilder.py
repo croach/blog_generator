@@ -145,7 +145,6 @@ class Post(object):
         This property is overwritten by the _initialize_meta method if a title
         attribute is in the meta portion of the blog post file.
         """
-        import ipdb; ipdb.set_trace()
         filename_and_ext = os.path.basename(self.path)
         filename = os.path.splitext(filename_and_ext)[0]
         title = re.sub('[-_]', ' ', filename).title()
