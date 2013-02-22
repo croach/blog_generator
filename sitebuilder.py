@@ -4,6 +4,7 @@ import os
 import sys
 import urlparse
 import datetime
+import re
 
 from werkzeug import cached_property
 from werkzeug.contrib.atom import AtomFeed
@@ -131,18 +132,45 @@ class Post(object):
 
     @cached_property
     def html(self):
+        """Converts the content portion of the file to HTML and returns it
+        """
         with open(self.path, 'r') as fin:
             content = fin.read().split('\n\n', 1)[1].strip()
         return markdown.markdown(content, ['fenced_code', 'codehilite'])
 
+    @cached_property
+    def title(self):
+        """Returns a title based on the name of the file
+
+        This property is overwritten by the _initialize_meta method if a title
+        attribute is in the meta portion of the blog post file.
+        """
+        import ipdb; ipdb.set_trace()
+        filename_and_ext = os.path.basename(self.path)
+        filename = os.path.splitext(filename_and_ext)[0]
+        title = re.sub('[-_]', ' ', filename).title()
+        return title
+
+    @cached_property
+    def date(self):
+        """Returns the current date
+
+        This property is overwritten by the _initialize_meta method if a title
+        attribute is in the meta portion of the blog post file.
+        """
+        return datetime.date.today()
+
     def _initialize_meta(self):
+        """Adds each attribute in the meta portion of the file to the object
+        """
         content = ''
         with open(self.path, 'r') as fin:
             for line in fin:
                 if not line.strip():
                     break
                 content += line
-        self.__dict__.update(yaml.load(content))
+        meta = yaml.load(content)
+        self.__dict__.update(meta if isinstance(meta, dict) else {})
 
 
 # Configuration
