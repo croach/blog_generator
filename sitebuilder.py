@@ -2,141 +2,162 @@
 
 import os
 import sys
-import urlparse
-import datetime
 import re
+import urlparse
+import collections
+import datetime
+import argparse
 
+from flask import Flask, render_template, url_for, abort, request
+from flask.ext import frozen
 from werkzeug import cached_property
 from werkzeug.contrib.atom import AtomFeed
-from flask import Flask, render_template, abort
-from flask_frozen import Freezer
-import yaml
 import markdown
+import yaml
 
 
-class SortedDict(dict):
-    def __init__(self, items=[], key=lambda item: item, reverse=False):
-        self._items = []
-        if reverse:
-            self._compare = lambda item1, item2: key(item1) > key(item2)
+class SortedDict(collections.MutableMapping):
+    def __init__(self, items=[], key=None, reverse=False):
+        self._items = {}
+        self._keys = []
+        if key:
+            self._key_fn = lambda k: key(self._items[k])
         else:
-            self._compare = lambda item1, item2: key(item1) < key(item2)
+            self._key_fn = lambda k: self._items[k]
+        self._reverse = reverse
 
-        # Insert all of the items into the dict
         self.update(items)
 
+    def __getitem__(self, key):
+        return self._items[key]
+
     def __setitem__(self, key, value):
-        # If the key already exists in the dict, remove it from the
-        # ordered items list before inserting it
-        if key in self:
-            self._items.remove(key)
-
-        # Get the index of the position where to insert the new item
-        index = len(self._items)
-        for i in range(len(self._items)):
-            curr = dict.__getitem__(self, self._items[i])
-            if self._compare(value, curr):
-                index = i
-                break
-
-        # Insert the new item into the ordered items list and self
-        self._items.insert(index, key)
-        dict.__setitem__(self, key, value)
+        self._items[key] = value
+        self._keys.append(key)
+        self._keys.sort(key=self._key_fn, reverse=self._reverse)
 
     def __delitem__(self, key):
-        self._items.remove(key)
-        dict.__delitem__(self, key)
-
-    def __iter__(self):
-        return iter(self.keys())
-
-    def __reverse__(self):
-        return reversed(self.keys())
-
-    def items(self):
-        return [(key, self[key]) for key in self._items]
-
-    def keys(self):
-        return [k for k, _ in self.items()]
-
-    def values(self):
-        return [v for _, v in self.items()]
-
-    def update(self, items=[], **kwargs):
-        if hasattr(items, 'keys'):
-            for key in items:
-                self[key] = items[key]
-        else:
-            for (key, value) in items:
-                self[key] = value
-
-        for key in kwargs:
-            self[key] = kwargs[key]
-
-
-# Code for handling blog posts
-class Posts(object):
-    def __init__(self, app):
-        self._app = app
-        self._cache = SortedDict(key=lambda post: post.date, reverse=True)
-        self.root = os.path.join(app.root_path, app.config.get('POSTS_ROOT_DIRECTORY', ''))
-        self.file_ext = app.config.get('POSTS_FILE_EXTENSION', '')
-        self._initialize_cache()
-
-    def __iter__(self):
-        return iter(self._cache.values())
+        self._items.pop(key)
+        self._keys.remove(key)
 
     def __len__(self):
-        return len(self._cache)
+        return len(self._keys)
 
-    def __getitem__(self, key):
-        return self._cache.values()[key]
+    def __iter__(self):
+        return iter(self._keys)
 
-    def get_or_404(self, path):
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self._items)
+
+
+class Blog(object):
+    def __init__(self, app):
+        """Initializes the Blog instance
+
+        Arguments:
+        app -- a Flask app object.
         """
-        Returns the Post object at path or raises a NotFound error
+        self._initialize_app(app)
+        self._initialize_cache(SortedDict(key=lambda p: p.date, reverse=True))
+
+    @property
+    def posts(self):
+        """Returns a list of all blog posts
+
+        The list of blog posts is sorted according to publication date (desc)
+        and all unplublished posts are removed when not in debug mode (i.e.,
+        whenever the site is being built).
+        """
+        if self._app.debug:
+            return self._cache.values()
+        else:
+            return [post for post in self._cache.values() if post.published]
+
+    def get_post_or_404(self, path):
+        """Returns the Post object at path or raises a NotFound error
+
+        Arguments:
+        path -- the filepath portion of a URL.
         """
         # Grab the post from the cache
         post = self._cache.get(path, None)
 
         # If the post isn't cached (or DEBUG), create a new Post object
-        if not post or self._app.config.get('DEBUG', False):
-            filepath = os.path.join(self.root, path + self.file_ext)
+        if not post:
+            filepath = os.path.join(
+                self._app.config['POSTS_ROOT_DIRECTORY'],
+                path + self._app.config['POSTS_FILE_EXTENSION']
+            )
             if not os.path.isfile(filepath):
                 abort(404)
-            post = Post(filepath, self.root)
-            self._cache[path] = post
+            post = Post(filepath, root_dir=self._app.config['POSTS_ROOT_DIRECTORY'])
+            self._cache[post.urlpath] = post
 
         return post
 
-    def _initialize_cache(self):
+    def _initialize_app(self, app):
+        """Initializes the given Flask app's configuration
+
+        Arguments:
+        app -- the flask app to be initialized.
         """
-        Walks the root directory and adds all posts to the cache dict
+        self._app = app
+        self._app.config.setdefault('POSTS_ROOT_DIRECTORY', 'posts')
+        self._app.config.setdefault('POSTS_FILE_EXTENSION', '.markdown')
+
+    def _initialize_cache(self, cache=None):
         """
-        for (path, dirpaths, filepaths) in os.walk(self.root):
+        Walks the root directory and adds all posts to the _cache dict
+
+        Keyword arguments:
+        cache -- if included all posts found will be merged into this object,
+            otherwise, a new cache is created and will replace the existing
+            cache object.
+        """
+        cache = cache or SortedDict(key=lambda p: p.date, reverse=True)
+        root_dir = self._app.config['POSTS_ROOT_DIRECTORY']
+        for (root, dirpaths, filepaths) in os.walk(root_dir):
             for filepath in filepaths:
-                if filepath.endswith(self.file_ext):
-                    abs_path = os.path.join(path, filepath)
-                    url = abs_path.replace(self.root, '').replace(self.file_ext, '')
-                    self._cache[url] = Post(abs_path, self.root)
+                filename, ext = os.path.splitext(filepath)
+                if ext == self._app.config['POSTS_FILE_EXTENSION']:
+                    path = os.path.join(root, filepath).replace(root_dir, '')
+                    post = Post(path, root_dir=root_dir)
+                    cache[post.urlpath] = post
+        self._cache = cache
 
 
 class Post(object):
-    def __init__(self, path, root=''):
-        self.path = os.path.join(root, path)
-        self.url = self.path.replace(root + os.sep, '')  # Make it relative to root
-        self.url = os.path.splitext(self.url)[0]         # Remove the file extension
-        self.url = self.url.replace(os.sep, '/')         # Replace os seperators with URL seperators
+    def __init__(self, path, root_dir=''):
+        """Initializes the Post instance
+
+        Arguments:
+        path -- the relative location of the file representing the blog post.
+
+        Keyword arguments:
+        root_dir -- an optional root directory for all of the blog posts
+            relative to the current directory.
+        """
+        self.urlpath = os.path.splitext(path.strip('/'))[0]
+        self.filepath = os.path.join(root_dir, path.strip('/'))
         self.published = False
-        self._initialize_meta()
+        self._initialize_metadata()
 
     @cached_property
     def html(self):
-        """Converts the content portion of the file to HTML and returns it
+        """Returns the HTML for the blog post
+
+        Converts the content portion of the file located at self.filepath to
+        HTML and returns it.
         """
-        with open(self.path, 'r') as fin:
+        with open(self.filepath, 'r') as fin:
             content = fin.read().split('\n\n', 1)[1].strip()
-        return markdown.markdown(content, ['fenced_code', 'codehilite'])
+        return markdown.markdown(content, extensions=['codehilite', 'fenced_code'])
+
+    @cached_property
+    def url(self):
+        """Returns the URL for the blog post
+        """
+        return url_for('post', path=self.urlpath)
 
     @cached_property
     def title(self):
@@ -145,7 +166,7 @@ class Post(object):
         This property is overwritten by the _initialize_meta method if a title
         attribute is in the meta portion of the blog post file.
         """
-        filename_and_ext = os.path.basename(self.path)
+        filename_and_ext = os.path.basename(self.filepath)
         filename = os.path.splitext(filename_and_ext)[0]
         title = re.sub('[-_]', ' ', filename).title()
         return title
@@ -159,11 +180,9 @@ class Post(object):
         """
         return datetime.date.today()
 
-    def _initialize_meta(self):
-        """Adds each attribute in the meta portion of the file to the object
-        """
+    def _initialize_metadata(self):
         content = ''
-        with open(self.path, 'r') as fin:
+        with open(self.filepath, 'r') as fin:
             for line in fin:
                 if not line.strip():
                     break
@@ -171,78 +190,88 @@ class Post(object):
         meta = yaml.load(content)
         self.__dict__.update(meta if isinstance(meta, dict) else {})
 
-
-# Configuration
-DEBUG = True
+# TODO move some of these into an external config file
+FREEZER_BASE_URL = 'http://christopherroach.com'
+FREEZER_IGNORED_FILES = ['.git', 'CNAME']
 POSTS_ROOT_DIRECTORY = 'posts'
 POSTS_FILE_EXTENSION = '.md'
-POSTS_URL_PREFIX = 'blog'
-FREEZER_REMOVE_EXTRA_FILES = True
-FREEZER_DESTINATION = os.path.join(os.path.abspath(os.pardir), 'croach.github.com')
-FREEZER_IGNORED_FILES = ['.git', 'CNAME']
-DOMAIN = 'christopherroach.com'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-freezer = Freezer(app)
-posts = Posts(app)
+freezer = frozen.Freezer(app)
+blog = Blog(app)
 
 
-# Custom filters
+# Custom Jinja Filter
 @app.template_filter('date')
-def date_filter(value, format='%B %d, %Y'):
+def format_date(value, format='%B %d, %Y'):
     return value.strftime(format)
+
 
 # Routes
 @app.route('/')
 def index():
-    if not app.debug:
-        published = [post for post in posts if post.published]
-    else:
-        published = posts
-    return render_template('index.html', posts=published)
+    return render_template('index.html', posts=blog.posts)
+
 
 @app.route('/blog/<path:path>/')
 def post(path):
-    post = posts.get_or_404(path)
+    post = blog.get_post_or_404(path)
     return render_template('post.html', post=post)
+
 
 @app.route('/feed.atom')
 def feed():
-    feed = AtomFeed('Christopher Roach',
-        feed_url='http://%s/%s' % (DOMAIN, 'feed.atom'),
-        url='http://%s' % DOMAIN,
+    feed = AtomFeed('My Awesome Blog',
+        feed_url=request.url,
+        url=request.url_root,
         updated=datetime.datetime.now())
-    for post in posts[:10]:  # Just show the last 10 posts
+    for post in blog.posts[:10]: # Just show the last 10 posts
         try:
             post_title = '%s: %s' % (post.title, post.subtitle)
         except AttributeError:
             post_title = post.title
-        post_url = 'http://%s/%s/%s' % (DOMAIN, 'blog', post.url)
+        post_url = urlparse.urljoin(request.url_root, post.url)
 
         feed.add(
             title=post_title,
-            content=unicode(post.html),
+            content=unicode(post.html),  # this could be a summary for the post
             content_type='html',
             author='Christopher Roach',
             url=post_url,
-            updated=post.date,
+            updated=post.date,  # published is optional, updated is not
             published=post.date)
     return feed.get_response()
 
-# Frozen Flask generators
-@freezer.register_generator
-def post_url_generator():
-    if not app.debug:
-        published = [post for post in posts if post.published]
-    else:
-        published = posts
-    return [('post', {'path': post.url}) for post in published]
-
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'build':
-        app.config['DEBUG'] = False
+    parser = argparse.ArgumentParser(description="Static site builder",
+        formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('command',
+        nargs='?',
+        default='debug',
+        metavar='COMMAND',
+        help="""one of the commands listed below (defaults to debug).
+
+build - builds the static website
+serve - runs an HTTP server on the result of the build
+run   - builds and serves the site
+debug - runs the development server in debug mode
+    """)
+    parser.add_argument('directory',
+        nargs='?',
+        default='build',
+        metavar='DIRECTORY',
+        help="the directory in which to build the site (default build)")
+
+    args = parser.parse_args()
+
+    freezer.app.config['FREEZER_DESTINATION'] = args.directory
+    if args.command == 'build':
         freezer.freeze()
-    else:
-        app.run(port=8000)
+    elif args.command == 'serve':
+        freezer.serve(port=8000)
+    elif args.command == 'run':
+        freezer.run(port=8000)
+    else: # debug
+        app.run(port=8000, debug=True)
