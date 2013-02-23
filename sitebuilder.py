@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import re
 import urlparse
 import collections
@@ -83,7 +82,7 @@ class Blog(object):
         # Grab the post from the cache
         post = self._cache.get(path, None)
 
-        # If the post isn't cached (or DEBUG), create a new Post object
+        # If the post isn't cached, create a new Post object
         if not post:
             filepath = os.path.join(
                 self._app.config['POSTS_ROOT_DIRECTORY'],
@@ -227,7 +226,7 @@ def feed():
         feed_url=request.url,
         url=request.url_root,
         updated=datetime.datetime.now())
-    for post in blog.posts[:10]: # Just show the last 10 posts
+    for post in blog.posts[:10]:  # Just show the last 10 posts
         try:
             post_title = '%s: %s' % (post.title, post.subtitle)
         except AttributeError:
