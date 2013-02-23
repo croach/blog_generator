@@ -143,18 +143,21 @@ class Post(object):
         self.urlpath = os.path.splitext(path.strip('/'))[0]
         self.filepath = os.path.join(root_dir, path.strip('/'))
         self.published = False
-        self._initialize_metadata()
+        self._initialize_post()
 
-    @cached_property
-    def html(self):
-        """Returns the HTML for the blog post
-
-        Converts the content portion of the file located at self.filepath to
-        HTML and returns it.
-        """
+    def _initialize_post(self):
         with open(self.filepath, 'r') as fin:
-            content = fin.read().split('\n\n', 1)[1].strip()
-        return markdown.markdown(content, extensions=['codehilite', 'fenced_code'])
+            content = re.split('\n---[ \t]*\n', fin.read().strip())
+
+        if len(content) == 2:  # the file contains metadata and content
+            meta = yaml.load(content[0])
+            html = markdown.markdown(content[1], extensions=['codehilite', 'fenced_code'])
+        else:  # the file only contains content
+            meta = None
+            html = markdown.markdown(content[0], extensions=['codehilite', 'fenced_code'])
+
+        self.__dict__.update(meta if isinstance(meta, dict) else {})
+        self.html = html
 
     @cached_property
     def url(self):
@@ -183,15 +186,6 @@ class Post(object):
         """
         return datetime.date.today()
 
-    def _initialize_metadata(self):
-        content = ''
-        with open(self.filepath, 'r') as fin:
-            for line in fin:
-                if not line.strip():
-                    break
-                content += line
-        meta = yaml.load(content)
-        self.__dict__.update(meta if isinstance(meta, dict) else {})
 
 # TODO move some of these into an external config file
 FREEZER_BASE_URL = 'http://christopherroach.com'
