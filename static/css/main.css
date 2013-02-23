@@ -29,3 +29,8 @@
 #posts .post-title {
     text-align: left;
 }
+
+iframe {
+    margin: 0 auto;
+    display: block;
+}
