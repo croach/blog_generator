@@ -266,5 +266,8 @@ debug - runs the development server in debug mode
         freezer.serve(port=8000)
     elif args.command == 'run':
         freezer.run(port=8000)
-    else: # debug
-        app.run(port=8000, debug=True)
+    else:  # debug
+        app.debug = True
+        # Adding the post filepaths to the reloader with the extra_files
+        # argument. That way, if a post is changed the server will reload.
+        app.run(port=8000, extra_files=[post.filepath for post in blog.posts])
