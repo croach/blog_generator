@@ -6,7 +6,7 @@ published: true
 
 I'm very happy to anounce that my very first Sublime Text plugin just went live a couple of days ago!
 
-It's a simple little plugin that automatically shows and hides the tab bar depending on how many files you currently have open. If you've used Safari or TextMate then you're already familiar with how this feature works. If you'd like to see it in action, checkout the video below, otherwise, if you'd like to just go ahead and install it and give it a try, you can do so through Will Bond's fantastic [Package Manager][1] by just searching for Hide Tabs, or you can download and install it yourself from its [GitHub page][2].
+It's a simple little plugin that automatically shows and hides the tab bar depending on how many files you currently have open. If you've used Safari or TextMate then you're already familiar with how this feature works. If you'd like to see it in action, checkout the video below, otherwise, if you'd like to just go ahead and install it and give it a try, you can do so through Will Bond's fantastic [Package Manager][1] by just searching for Hide Tabs, or you can download and install it yourself from its [GitHub page][2]. One more thing, the plugin was created to work with both Sublime Text 2 and new beta version of 3, so feel free to use it with either.
 
 I hope you like it.
 
