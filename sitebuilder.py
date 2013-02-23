@@ -33,8 +33,9 @@ class SortedDict(collections.MutableMapping):
 
     def __setitem__(self, key, value):
         self._items[key] = value
-        self._keys.append(key)
-        self._keys.sort(key=self._key_fn, reverse=self._reverse)
+        if key not in self._keys:
+            self._keys.append(key)
+            self._keys.sort(key=self._key_fn, reverse=self._reverse)
 
     def __delitem__(self, key):
         self._items.pop(key)
