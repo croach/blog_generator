@@ -137,6 +137,9 @@ class Post(object):
         root_dir -- an optional root directory for all of the blog posts
             relative to the current directory.
         """
+        # If the root directory is included in the path, remove it.
+        # And, also, make sure that all paths are unicode.
+        path = unicode(path.lstrip(root_dir))
         self.urlpath = os.path.splitext(path.strip('/'))[0]
         self.filepath = os.path.join(root_dir, path.strip('/'))
         self.published = False
