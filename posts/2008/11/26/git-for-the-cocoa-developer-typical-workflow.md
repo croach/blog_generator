@@ -1,8 +1,9 @@
 title: "Git for the Cocoa Developer"
 subtitle: "A Typical Workflow"
-published: true
+published: false
 date: 2008-11-26
 tags: [cocoa, git]
+---
 
 Lately I've been doing a bit of Cocoa development. To be perfectly honest, Between an [ABM](http://en.wikipedia.org/wiki/Agent-based_model) Simulation Framework I've been working on (I'll talk about this a bit more in a future post) and the [iPhone development class](http://www.stanford.edu/class/cs193p/cgi-bin/index.php) that I'm taking, I've actually been doing quite a lot of Cocoa development. Now, I like to use some type source control system when I develop software, even when I'm developing by myself. I also typically like to use a distributed source control system (the reasons for why are another blog post for another time when I'm feeling a bit more iconoclastic) such as Mercurial or Git. When I started developing my ABM framework I decided that I would give SVN a try since support for it was built into Xcode and typically if you try not to fight the tools, you find that development is quite a bit easier. Unfortunately, this time that didn't ring true. From the get-go I ran into troubles, and considering my disdain for SVN and all the other centralized repository systems, I decided to drop it and go with Git instead.
 

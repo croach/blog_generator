@@ -2,8 +2,9 @@ layout: post
 title: "Git for the Cocoa Developer"
 subtitle: "Remote Setup"
 date: 2008-12-15
-published: true
+published: false
 tags: [cocoa, git]
+---
 
 If your remote repository exists on a server whose `ssh` server is relegated to something other than the typical port, you might find it hard to connect to your repository with Git. Git offers---as far as I can tell---no command line option to change the default port number to one of your own choosing. So, in order to get your work done, you'll have to add a new host configuration to your user-scoped `ssh` config file. The rest of this post deals with creating a new host configuration and setting up your Git repositories to use the new configuration when connecting to a remote repository.
 
@@ -15,7 +16,7 @@ To add a new host configuration to ssh, you'll need to open the config file whic
     Port 2222
     User remote_username
 
-Each new host configuration in your `ssh` config file must contain a `Host` key, value pair. This will take the place of the hostname that you usually pass into the `ssh` command when opening a new connection to a remote server. Next, is the `Hostname` key, value pair in which you will designate the url of your remote repository. The `Port` option is, obviously, the port on which the remote `ssh` daemon is listening. Finally, and this one is completely optional, you can add the `User` key, value pair which allows you to designate the user name that you use to log into the remote machine through ssh. If you do not include this option, you'll be prompted to enter your user name along with your password when doing anything over ssh to the designated remote machine. 
+Each new host configuration in your `ssh` config file must contain a `Host` key, value pair. This will take the place of the hostname that you usually pass into the `ssh` command when opening a new connection to a remote server. Next, is the `Hostname` key, value pair in which you will designate the url of your remote repository. The `Port` option is, obviously, the port on which the remote `ssh` daemon is listening. Finally, and this one is completely optional, you can add the `User` key, value pair which allows you to designate the user name that you use to log into the remote machine through ssh. If you do not include this option, you'll be prompted to enter your user name along with your password when doing anything over ssh to the designated remote machine.
 
 When all is said and done, the following command:
 
