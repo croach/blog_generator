@@ -149,12 +149,13 @@ class Post(object):
         with open(self.filepath, 'r') as fin:
             content = re.split('\n---[ \t]*\n', fin.read().strip())
 
+        markdown_extensions = ['codehilite', 'fenced_code', 'smartypants']
         if len(content) == 2:  # the file contains metadata and content
             meta = yaml.load(content[0])
-            html = markdown.markdown(content[1], extensions=['codehilite', 'fenced_code'])
+            html = markdown.markdown(content[1], extensions=markdown_extensions)
         else:  # the file only contains content
             meta = None
-            html = markdown.markdown(content[0], extensions=['codehilite', 'fenced_code'])
+            html = markdown.markdown(content[0], extensions=markdown_extensions)
 
         self.__dict__.update(meta if isinstance(meta, dict) else {})
         self.html = html
@@ -270,4 +271,7 @@ debug - runs the development server in debug mode
         app.debug = True
         # Adding the post filepaths to the reloader with the extra_files
         # argument. That way, if a post is changed the server will reload.
+        # TODO: Need to also restart when adding/removing files. Perhaps use
+        # Watchdog (http://pythonhosted.org/watchdog/) to monitor the posts
+        # directory and then call
         app.run(port=8000, extra_files=[post.filepath for post in blog.posts])
