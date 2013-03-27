@@ -1,4 +1,4 @@
-title: Why is Node So Weird?
+title: Why is Programming in Node So Different?
 date: 2013-03-24
 published: true
 ---
